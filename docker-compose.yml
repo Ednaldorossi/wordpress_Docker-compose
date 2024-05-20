@@ -1,0 +1,70 @@
+services:
+   mysql:
+    image: mysql:5.5
+    restart: always
+    container_name: mysql_wordpress_ha_compose
+    volumes:
+      - db-ha-data:/var/lib/mysql
+    networks:
+      - backend-web
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: wordpress 
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+
+   wordpress1:
+    depends_on:
+      - mysql
+    networks:
+      - backend-web
+    image: wordpress:4.7-php5.6
+    restart: always
+    container_name: wordpress1_ha_compose
+    volumes:
+      - wp-ha-data:/var/www/html
+    ports:
+      - 81:80
+    environment:
+      WORDPRESS_DB_HOST: mysql:3306
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+
+   wordpress2:
+    depends_on:
+      - mysql
+    networks:
+      - backend-web
+    image: wordpress:4.7-php5.6
+    restart: always
+    container_name: wordpress2_ha_compose
+    volumes:
+      - wp-ha-data:/var/www/html
+    ports:
+      - 82:80
+    environment:
+      WORDPRESS_DB_HOST: mysql:3306
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+
+   haproxy:
+    image: haproxy:1.6
+    restart: always
+    networks:
+      - frontend-web
+      - backend-web
+    ports:
+      - 8080:80
+    volumes:
+      - "./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro"
+volumes:
+   db-ha-data:
+   wp-ha-data:
+
+networks:
+    frontend-web:
+      internal: false
+    backend-web:
+      internal: true
